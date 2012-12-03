@@ -1,0 +1,3 @@
+LIBRARY     "JuliaFractalAssembly" 
+EXPORTS
+ProcessJulia
