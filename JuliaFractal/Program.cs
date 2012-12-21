@@ -82,6 +82,8 @@ namespace PhoenixJuliaFractal
             this.form.setExecution(true);
 
             Thread[] threadPool = new Thread[coresCount];
+            ProgramExecutionStartegyParams[] threadParamsStack = new ProgramExecutionStartegyParams[coresCount];
+
             // MessageBox.Show("cores selected: "  + threadPool.Length.ToString());
             double RangeXStart = this.form.RangeXStart;
             double RangeXStop = this.form.RangeXStop;
@@ -93,9 +95,9 @@ namespace PhoenixJuliaFractal
             imageBytes = new int[imageWidth * imageHeight];
 
             for (int i = 0; i < imageBytes.Length; ++i)
-                imageBytes[i] = 5;
+                imageBytes[i] = 0;
             
-            ProgramExecutionStartegyParams threadParams;
+            //ProgramExecutionStartegyParams threadParams;
 
             int ExecutionStepsStop = imageHeight;
             int ExecutionStepsPerProcess = (int)Math.Ceiling((double)ExecutionStepsStop / threadPool.Length);
@@ -103,34 +105,38 @@ namespace PhoenixJuliaFractal
 
             for (int i = 0; i < threadPool.Length; ++i)
             {
-                threadParams = new ProgramExecutionStartegyParams();
-                threadParams.ThradId = i + 1;
-                //threadParams.Offset = 1;
-                threadParams.Strategy = strategy;
+                threadParamsStack[i] = new ProgramExecutionStartegyParams();
+                threadParamsStack[i].ThradId = i + 1;
+                //threadParamsStack[i].Offset = 1;
+                //threadParamsStack[i].Strategy = strategy;
+                threadParamsStack[i].Strategy = ProgramExecutionStrategyFactory.getStrategy(this.form.ExecutionMode);
 
                 ExecutionStepsTotal += ExecutionStepsPerProcess;
 
-                threadParams.ExecutionOffsetStart = i * ExecutionStepsPerProcess;
+                threadParamsStack[i].ExecutionOffsetStart = i * ExecutionStepsPerProcess;
 
-                if (threadParams.ThradId == threadPool.Length)
-                    threadParams.ExecutionOffsetStop = ExecutionStepsStop;
+                if (threadParamsStack[i].ThradId == threadPool.Length)
+                    threadParamsStack[i].ExecutionOffsetStop = ExecutionStepsStop;
                 else
-                    threadParams.ExecutionOffsetStop = ExecutionStepsTotal;
+                    threadParamsStack[i].ExecutionOffsetStop = ExecutionStepsTotal;
 
-                //int[] imageBytes2 = new int[imageWidth * imageHeight];
-
-                threadParams.ImageBytes = imageBytes;
-                threadParams.ImageWidth = imageWidth;
-                threadParams.ImageHeight = imageHeight;
-                threadParams.RangeXStart = RangeXStart;
-                threadParams.RangeXStop = RangeXStop;
-                threadParams.RangeYStart = RangeYStart;
-                threadParams.RangeYStop = RangeYStop;
-                threadParams.ParamCRe = CRe;
-                threadParams.ParamCIm = CIm;
+                //threadParamsStack[i].ImageBytes = imageBytes;
+                threadParamsStack[i].ImageBytes = new int[imageWidth * imageHeight];
+                threadParamsStack[i].ImageWidth = imageWidth;
+                threadParamsStack[i].ImageHeight = imageHeight;
+                threadParamsStack[i].RangeXStart = RangeXStart;
+                threadParamsStack[i].RangeXStop = RangeXStop;
+                threadParamsStack[i].RangeYStart = RangeYStart;
+                threadParamsStack[i].RangeYStop = RangeYStop;
+                threadParamsStack[i].ParamCRe = CRe;
+                threadParamsStack[i].ParamCIm = CIm;
 
                 threadPool[i] = new Thread(new ParameterizedThreadStart(ThreadStartHaha));
-                threadPool[i].Start(threadParams);
+            }
+
+            for (int i = 0; i < threadPool.Length; ++i)
+            {
+                threadPool[i].Start(threadParamsStack[i]);
             }
 
             stopwatch.Restart();
@@ -142,6 +148,15 @@ namespace PhoenixJuliaFractal
 
             stopwatch.Stop();
 
+            // merge data from threads
+            for (int i = 0; i < threadPool.Length; ++i)
+            {
+                for (int n = threadParamsStack[i].ExecutionOffsetStart * threadParamsStack[i].ImageHeight; n < threadParamsStack[i].ExecutionOffsetStop * threadParamsStack[i].ImageHeight; ++n)
+                {
+                    imageBytes[n] = threadParamsStack[i].ImageBytes[n];
+                }
+            }
+            
         }
 
         public void bw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)

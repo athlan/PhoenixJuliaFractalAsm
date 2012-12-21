@@ -23,12 +23,12 @@ StructComplex STRUCT
 StructComplex ENDS
 
 StructXMM2 STRUCT
-	L	QWORD ?		; lo-part of register when structure is loaded by MOVAPD
+	L	QWORD ?		; lo-part of register when structure is loaded by MOVUPD
 	H	QWORD ?		; hi-part of register
 StructXMM2 ENDS
 
 StructXMM4 STRUCT
-	LL	DWORD ?		; lo-lo-part of register when structure is loaded by MOVAPD
+	LL	DWORD ?		; lo-lo-part of register when structure is loaded by MOVUPD
 	LH	DWORD ?		; lo-hi-part
 	HL	DWORD ?		; hi-lo-part of register
 	HH	DWORD ?		; hi-hi-part of register
@@ -36,27 +36,28 @@ StructXMM4 ENDS
 
 .data
 ;ALIGN 16
-tmp1_xmm		StructXMM2<0.0, 0.0>
+;tmp1_xmm		StructXMM2<0.0, 0.0>
 ;ALIGN 16
-imageRatio		StructXMM2<0.0, 0.0>	; .H = Y ratio, .L = X ratio
+;imageRatio		StructXMM2<0.0, 0.0>	; .H = Y ratio, .L = X ratio
 ;ALIGN 16
-complex_c		StructComplex<0.0, 0.0>
+;complex_c		StructComplex<0.0, 0.0>
 ;ALIGN 16
-complex_p		StructComplex<0.0, 0.0>
+;complex_p		StructComplex<0.0, 0.0>
 ;ALIGN 16
-complex_z			StructComplex<0.0, 0.0>
+;complex_z			StructComplex<0.0, 0.0>
 ;ALIGN 16
-complex_z_prev		StructComplex<0.0, 0.0>
+;complex_z_prev		StructComplex<0.0, 0.0>
 ;ALIGN 16
-complex_z_next		StructComplex<0.0, 0.0>
+;complex_z_next		StructComplex<0.0, 0.0>
 ;ALIGN 16
-complex_tmp			StructXMM2<0.0, 0.0>
+;complex_tmp			StructXMM2<0.0, 0.0>
 ;ALIGN 16
-complex_fill_0_0	StructXMM2<0.0, 0.0>
-;ALIGN 16
-complex_fill_2_1	StructXMM2<1.0, 2.0>
-;ALIGN 16
-complex_fill_4_4	StructXMM2<4.0, 0.0>
+;complex_fill_0_0	StructXMM2<0.0, 0.0>
+ALIGN 16
+complex_fill_2_1_g	StructXMM2<1.0, 2.0>
+ALIGN 16
+complex_fill_4_4_g	StructXMM2<4.0, 0.0>
+
 
 ;tmp_segment		DWORD ?
 ;loop_i DWORD 0
@@ -74,14 +75,59 @@ DetectSSE3 proc uses ebx ecx edx
 	ret
 DetectSSE3 endp
 
-ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, imageHeight:dword, imageWidthQ:real8, imageHeightQ:real8, rangeXStart:real8, rangeXStop:real8, rangeYStart:real8, rangeYStop:real8, CRe:real8, CIm:real8
-	LOCAL sse3presence:DWORD, pixelLevel:DWORD, tmp_segment:DWORD, loop_i:DWORD, loop_j:DWORD;
-	;LOCAL tempppp:StructComplex;
+ALIGN 16
+ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, offsetStop:dword, imageWidth:dword, imageHeight:dword, imageWidthQ:real8, imageHeightQ:real8, rangeXStart:real8, rangeXStop:real8, rangeYStart:real8, rangeYStop:real8, CRe:real8, CIm:real8
+	LOCAL tmp1_xmm		: StructXMM2
+	LOCAL imageRatio	: StructXMM2
+	LOCAL complex_c		: StructComplex
+	LOCAL complex_p		: StructComplex
+	LOCAL complex_z		: StructComplex
+	LOCAL complex_z_prev	: StructComplex
+	LOCAL complex_z_next	: StructComplex
+	LOCAL complex_tmp		: StructXMM2
+	LOCAL tmpq	: qword
+
+	LOCAL sse3presence:DWORD;
+	LOCAL pixelLevel:DWORD;
+	LOCAL tmp_segment:DWORD;
+	LOCAL loop_i:DWORD, loop_j:DWORD;
 	
+	; RESEVED REGISTERS:
+	; xmm4 - for fill 2-1
+	; xmm5 - for fill 4-0
+	
+	;MOV eax, 1
+	;MOVQ tmpq, eax
+	;MOVLPD complex_tmp.H, tmpq
+
+	MOVUPD	xmm4, complex_fill_2_1_g
+	MOVUPD	xmm5, complex_fill_4_4_g
+
+	XORPS	xmm0, xmm0
+	MOVUPD  tmp1_xmm, xmm0
+	MOVUPD  imageRatio, xmm0
+	MOVUPD  complex_c, xmm0
+	MOVUPD  complex_p, xmm0
+	MOVUPD  complex_z, xmm0
+	MOVUPD  complex_z_prev, xmm0
+	MOVUPD  complex_z_next, xmm0
+	MOVUPD  complex_tmp, xmm0
+
+	;mov eax, 2
+	;movd mm0, eax
+	;movq tmpQword, mm0
+	;MOVHPD		xmm0, tmpQword
+
+	;mov eax, 1
+	;movd mm0, eax
+	;movq tmpQword, mm0
+	;MOVLPD		xmm0, tmpQword
+
+
 	CALL	DetectSSE3
 	mov		sse3presence, eax
 
-	MOV2XMM		xmm6, 4, mm0
+	;MOV2XMM		xmm6, 4, mm0
 
 	;
 	; Compute the ratio
@@ -97,19 +143,20 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 	MOVLPD		xmm1, imageHeightQ	; XMM1: |imageWidth|imageHeight|
 	DIVPD		xmm0, xmm1			; XMM0: |(rangeXStop - rangeXStart)/imageWidth|(rangeYStop - rangeYStart)/imageHeight|
 	
-	MOVAPD		imageRatio, xmm0	; imageRatio.L = Y ratio
+	MOVUPD		imageRatio, xmm0	; imageRatio.L = Y ratio
 									; imageRatio.H = X ratio
 	
 	;
 	; Load complex C
 	MOVLPD		xmm0, CRe			; XMM0: | ---- |c.Re|
 	MOVHPD		xmm0, CIm			; XMM0: |c.Im|c.Re|
-	MOVAPD		complex_c, xmm0
+	MOVUPD		complex_c, xmm0
 
 	;
 	; For each Y iteration loop
 	;
-	MOV			ecx, 0
+	;MOV			ecx, 0
+	MOV			ecx, offsetStart
 	MOV			loop_i, ecx
 	for_i:
 		
@@ -120,18 +167,19 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 		MOV		eax, ecx
 		IMUL	eax, imageHeight
 		MOV		tmp_segment, eax		; tmp_segment = i * imageHeight
+		;MOV		edx, eax		; tmp_segment = i * imageHeight
 		
 		;
 		; Compute complex_p.Im
 		;
-		MOVLPD		xmm7, imageRatio.L	; XMM0: | ---- |Yratio|
+		MOVLPD		xmm1, imageRatio.L	; XMM0: | ---- |Yratio|
 		MOVD		mm0, ecx
 		CVTPI2PD	xmm0, mm0			; XMM0: | ---- |i|
-		MULPD		xmm7, xmm0			; XMM7: | ---- |Yratio*i|
+		MULPD		xmm1, xmm0			; XMM7: | ---- |Yratio*i|
 		MOVLPD		xmm0, rangeYStart	; XMM0: | ---- |Ymin|
-		ADDPD		xmm7, xmm0			; XMM7: | ---- |Yratio*i + Ymin|
+		ADDPD		xmm1, xmm0			; XMM7: | ---- |Yratio*i + Ymin|
 
-		MOVDQ2Q		mm0, xmm7			; grab the result
+		MOVDQ2Q		mm0, xmm1			; grab the result
 		MOVQ		complex_p.Im, mm0
 
 		;
@@ -149,14 +197,14 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 			;
 			; Compute complex_p.Re
 			;
-			MOVLPD		xmm7, imageRatio.H	; XMM0: | ---- |Xratio|
+			MOVLPD		xmm1, imageRatio.H	; XMM0: | ---- |Xratio|
 			MOVD		mm0, ecx
 			CVTPI2PD	xmm0, mm0			; XMM0: | ---- |j|
-			MULPD		xmm7, xmm0			; XMM7: | ---- |Xratio*j|
+			MULPD		xmm1, xmm0			; XMM7: | ---- |Xratio*j|
 			MOVLPD		xmm0, rangeXStart	; XMM0: | ---- |Xmin|
-			ADDPD		xmm7, xmm0			; XMM7: | ---- |Xratio*j + Xmin|
+			ADDPD		xmm1, xmm0			; XMM7: | ---- |Xratio*j + Xmin|
 
-			MOVDQ2Q		mm0, xmm7			; grab the result
+			MOVDQ2Q		mm0, xmm1			; grab the result
 			MOVQ		complex_p.Re, mm0
 
 
@@ -167,21 +215,21 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 			MOV			ecx, 0			; iterations counter
 
 			XORPS		xmm0, xmm0				; make zero in xmm registers
-			MOVAPD		complex_z, xmm0			; z = 0
-			MOVAPD		complex_z_prev, xmm0	; z_prev = 0
+			MOVUPD		complex_z, xmm0			; z = 0
+			MOVUPD		complex_z_prev, xmm0	; z_prev = 0
 
-			MOVAPD		xmm0, complex_p
-			MOVAPD		complex_z_next, xmm0	; z_next = p
+			MOVUPD		xmm0, complex_p
+			MOVUPD		complex_z_next, xmm0	; z_next = p
 
 			MOV			eax, sse3presence
 			
 			; main computation loop
 			compute_g:
-				MOVAPD		xmm0, complex_z
-				MOVAPD		complex_z_prev, xmm0	; z_prev = z
+				MOVUPD		xmm0, complex_z
+				MOVUPD		complex_z_prev, xmm0	; z_prev = z
 
-				MOVAPD		xmm0, complex_z_next
-				MOVAPD		complex_z, xmm0			; z = z_next
+				MOVUPD		xmm0, complex_z_next
+				MOVUPD		complex_z, xmm0			; z = z_next
 
 				;;; g function
 				XORPS		xmm0, xmm0
@@ -204,7 +252,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 				MOVLPD		xmm2, complex_z.Re		; XMM2: |z.Im|z.Re|
 
 				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im|z.Re^2|
-				MOVAPD		xmm2, complex_fill_2_1
+				MOVUPD		xmm2, xmm4
 				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im * 2|z.Re^2|
 				; debug checkpoint 2
 
@@ -219,7 +267,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 				compute_g_checkpoint3_sse_notfound:
 					XORPS		xmm2, xmm2
 					XORPS		xmm3, xmm3
-					MOVAPD		tmp1_xmm, xmm0
+					MOVUPD		tmp1_xmm, xmm0
 				
 					MOVLPD		xmm2, tmp1_xmm.L		; XMM2: | 0 | z.Im^2 |
 					MOVHPD		xmm3, tmp1_xmm.H		; XMM3: | c.Im * z_prev.Im | 0 |
@@ -248,7 +296,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 				ADDPD		xmm1, xmm0				; XMM1: |(z.Re * z.Im * 2) + (c.Im * z_prev.Im)|(z.Re^2) - (z.Im^2) + (c.Im * z_prev.Re) + c.Re|
 				; debug checkpoint #6
 
-				MOVAPD		complex_z_next, xmm1	; z_next
+				MOVUPD		complex_z_next, xmm1	; z_next
 
 				; compute the modulo
 				MOVLPD		xmm0, complex_z.Im		; XMM0: | ---- | z.Im |
@@ -257,7 +305,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 				MOVHPD		xmm1, complex_z.Re		; XMM1:	| z.Re | z.Im |
 
 				MULPD		xmm0, xmm1				; XMM0: | z.Re ^ 2 | z.Im ^ 2 |
-				MOVAPD		complex_tmp, xmm0
+				MOVUPD		complex_tmp, xmm0
 
 				MOVLPD		xmm1, complex_tmp.H		; XMM1: | ---- | z.Re ^ 2 |
 				ADDPD		xmm0, xmm1				; XMM0: | ---- | z.Im ^ 2 + z.Re ^ 2 |
@@ -265,15 +313,16 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 				INC		ecx
 
 				; compare xmm and xmm6 and store result i EFLAGS
-				COMISD		xmm0, xmm6				; XMM0 is modulo, XMM6 is "4"
+				COMISD		xmm0, xmm5				; XMM0 is modulo, XMM5 is "4"
 				
 				
 				JAE		compute_g_end					; if modulo >= 4 then end
 				;JGE		compute_g_end				; if modulo >= 4 then end
 				CMP		ecx, 120					
-				JGE		compute_g_end				; if iterations >= 120 then end
+				;JGE		compute_g_end				; if iterations >= 120 then end
 
-				JMP		compute_g					; if modulo < 4 && iterations < 120
+				;JMP		compute_g					; if modulo < 4 && iterations < 120
+				JNGE		compute_g				; if iterations >= 120 then end
 
 			; end compute g
 		
@@ -284,7 +333,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 			ADD		eax, loop_j
 
 			MOV		DWORD PTR[edx+eax*4], ecx
-			
+
 			; PUSH ecx POP #2
 			POP		ecx
 
@@ -303,7 +352,8 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, imageWidth:dword, i
 		;MOV		ecx, loop_i
 		INC		ecx
 		MOV		loop_i, ecx
-		CMP		ecx, imageHeight
+		;CMP		ecx, imageHeight
+		CMP		ecx, offsetStop
 		JL		for_i
 
 	; end for_i

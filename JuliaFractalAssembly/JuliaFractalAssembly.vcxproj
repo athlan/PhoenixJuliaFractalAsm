@@ -167,10 +167,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="JuliaFractalAssembly.asm" />
-    <MASM Include="JuliaFractalAssembly2.asm">
+    <MASM Include="JuliaFractalAssembly22.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
+    <MASM Include="JuliaFractalAssembly.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

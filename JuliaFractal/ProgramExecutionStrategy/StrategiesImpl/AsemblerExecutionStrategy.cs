@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace PhoenixJuliaFractal.ProgramExecutionStrategy
 {
@@ -12,7 +13,7 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
         //[DllImport("JuliaFractalAssembly.dll")]
         //public static extern int Dodaj(int a, int b);
         [DllImport("JuliaFractalAssembly.dll")]
-        public static extern int ProcessJulia(int* imageTab, int imageTabSize, int imageWidth, int imageHeight, double imageWidthQ, double imageHeightQ, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm);
+        public static extern int ProcessJulia(int* imageTab, int imageTabSize, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double imageWidthQ, double imageHeightQ, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm);
         //public static extern int ProcessJuliaLocal(int* imageTab, int imageTabSize, int imageWidth, int imageHeight, double imageWidthQ, double imageHeightQ, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm);
 
         public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm)
@@ -26,9 +27,16 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
             fixed (int* imageBytesPtr = &imageBytes[0])
             {
                 //for (int e = 0; e < 10; ++e)
-                result = ProcessJulia(imageBytesPtr, imageBytes.Length, imageWidth, imageHeight, Convert.ToDouble(imageWidth), Convert.ToDouble(imageHeight), rangeXStart, rangeXStop, rangeYStart, rangeYStop, CRe, CIm);
-            }
+                try
+                {
+                    result = ProcessJulia(imageBytesPtr, imageBytes.Length, offsetStart, offsetStop, imageWidth, imageHeight, Convert.ToDouble(imageWidth), Convert.ToDouble(imageHeight), rangeXStart, rangeXStop, rangeYStart, rangeYStop, CRe, CIm);
 
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.Message);
+                }
+            }
             // render
             int iteration = 0;
             int color = 0;
