@@ -305,9 +305,14 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 				MOVHPD		xmm1, complex_z.Re		; XMM1:	| z.Re | z.Im |
 
 				MULPD		xmm0, xmm1				; XMM0: | z.Re ^ 2 | z.Im ^ 2 |
-				MOVUPD		complex_tmp, xmm0
 
-				MOVLPD		xmm1, complex_tmp.H		; XMM1: | ---- | z.Re ^ 2 |
+				; done
+				XORPS		xmm1, xmm1
+				MOVHLPS		xmm1, xmm0
+				; eodone
+
+				;MOVUPD		complex_tmp, xmm0
+				;MOVLPD		xmm1, complex_tmp.H		; XMM1: | ---- | z.Re ^ 2 |
 				ADDPD		xmm0, xmm1				; XMM0: | ---- | z.Im ^ 2 + z.Re ^ 2 |
 				
 				INC		ecx
