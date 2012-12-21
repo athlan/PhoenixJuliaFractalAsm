@@ -223,7 +223,10 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 
 			XORPS		xmm0, xmm0				; make zero in xmm registers
 			MOVUPD		complex_z, xmm0			; z = 0
+			XORPS		xmm4, xmm4				; z = 0
+
 			MOVUPD		complex_z_prev, xmm0	; z_prev = 0
+			XORPS		xmm5, xmm5				; z_prev = 0
 
 			MOVUPD		xmm0, complex_p
 			MOVAPD		xmm6, xmm0				; z_next = p
@@ -232,24 +235,21 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 			
 			; main computation loop
 			compute_g:
-				MOVUPD		xmm0, complex_z
-				MOVUPD		complex_z_prev, xmm0	; z_prev = z
-				
-				;MOVUPD		xmm0, complex_z_next
-				MOVUPD		xmm0, xmm6
-				MOVUPD		complex_z, xmm0			; z = z_next
-
-				MOVUPD		xmm4, complex_z
-				MOVUPD		xmm5, complex_z_prev
+				MOVAPD		xmm5, xmm4	; z_prev = z
+				MOVAPD		xmm4, xmm6	; z_prev = z
 
 				;;; g function
-				XORPS		xmm0, xmm0
-				XORPS		xmm1, xmm1
+				;XORPS		xmm0, xmm0
+				;XORPS		xmm1, xmm1
 
-				MOVLHPS		xmm0, xmm7
-				MOVLPD		xmm0, complex_z.Im		; XMM0: |c.Im|complex_z.Im|
-				MOVHPD		xmm1, complex_z_prev.Im
-				MOVLPD		xmm1, complex_z.Im		; XMM1: |z_prev.Im|complex_z.Im|
+				MOVLHPS		xmm0, xmm7				; XMM0: |c.Im| ---- |
+				
+				MOVAPD		xmm3, xmm4				; XMM3: |complex_z.Im |complex_z.Re |
+				MOVHLPS		xmm0, xmm3				; XMM0: |c.Im|complex_z.Im|
+				
+				MOVHLPS		xmm1, xmm5				; XMM1: | ---- |z_prev.Im|
+				MOVLHPS		xmm1, xmm1				; XMM1: |z_prev.Im|z_prev.Im|
+				MOVHLPS		xmm1, xmm4				; XMM1: |z_prev.Im|complex_z.Im|
 
 				MULPD		xmm0, xmm1				; XMM0: |c.Im * z_prev.Im|z.Im^2|
 				; debug checkpoint #1
@@ -262,9 +262,12 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 				MOVAPD		xmm2, xmm4				; XMM2: |z.Im|z.Re|
 
 				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im|z.Re^2|
-				MOVUPD		xmm2, complex_fill_2_1_g
-				
-				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im * 2|z.Re^2|
+
+				MOVAPD		xmm3, xmm1				; XMM3: |z.Re * z.Im|z.Re^2|
+				MOVHLPS		xmm3, xmm3				; XMM3: |z.Re * z.Im|z.Re * z.Im|
+				ADDPD		xmm3, xmm3				; XMM3: |z.Re * z.Im * 2|z.Re * z.Im * 2|
+
+				MOVLHPS		xmm1, xmm3				; XMM1: |z.Re * z.Im * 2|z.Re^2|
 				; debug checkpoint 2
 
 				ADDSUBPD	xmm1, xmm0				; XMM1: |(z.Re * z.Im * 2) + (c.Im * z_prev.Im)|(z.Re^2) - (z.Im^2)|
