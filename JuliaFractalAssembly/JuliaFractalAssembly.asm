@@ -95,6 +95,11 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 	; RESEVED REGISTERS:
 	; xmm4 - for fill 2-1
 	; xmm5 - for fill 4-0
+
+	; xmm4 - complex_z
+	; xmm5 - complex_z_prev
+	; xmm6 - complex_z_next
+	; xmm7 - complex_c
 	
 	;MOV eax, 1
 	;MOVQ tmpq, eax
@@ -148,9 +153,11 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 	
 	;
 	; Load complex C
-	MOVLPD		xmm0, CRe			; XMM0: | ---- |c.Re|
-	MOVHPD		xmm0, CIm			; XMM0: |c.Im|c.Re|
-	MOVUPD		complex_c, xmm0
+	MOVLPD		xmm7, CRe			; XMM0: | ---- |c.Re|
+	MOVHPD		xmm7, CIm			; XMM0: |c.Im|c.Re|
+	MOVUPD		complex_c, xmm7
+	MOVHPD		xmm7, CRe			; XMM0: | ---- |c.Re|
+	MOVLPD		xmm7, CIm			; XMM0: |c.Im|c.Re|
 
 	;
 	; For each Y iteration loop
@@ -219,7 +226,7 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 			MOVUPD		complex_z_prev, xmm0	; z_prev = 0
 
 			MOVUPD		xmm0, complex_p
-			MOVUPD		complex_z_next, xmm0	; z_next = p
+			MOVAPD		xmm6, xmm0				; z_next = p
 
 			MOV			eax, sse3presence
 			
@@ -227,15 +234,19 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 			compute_g:
 				MOVUPD		xmm0, complex_z
 				MOVUPD		complex_z_prev, xmm0	; z_prev = z
-
-				MOVUPD		xmm0, complex_z_next
+				
+				;MOVUPD		xmm0, complex_z_next
+				MOVUPD		xmm0, xmm6
 				MOVUPD		complex_z, xmm0			; z = z_next
+
+				MOVUPD		xmm4, complex_z
+				MOVUPD		xmm5, complex_z_prev
 
 				;;; g function
 				XORPS		xmm0, xmm0
 				XORPS		xmm1, xmm1
 
-				MOVHPD		xmm0, complex_c.Im
+				MOVLHPS		xmm0, xmm7
 				MOVLPD		xmm0, complex_z.Im		; XMM0: |c.Im|complex_z.Im|
 				MOVHPD		xmm1, complex_z_prev.Im
 				MOVLPD		xmm1, complex_z.Im		; XMM1: |z_prev.Im|complex_z.Im|
@@ -246,80 +257,64 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 				XORPS		xmm1, xmm1
 				XORPS		xmm2, xmm2
 
-				MOVHPD		xmm1, complex_z.Re
-				MOVLPD		xmm1, complex_z.Re		; XMM1: |z.Re|z.Re|
-				MOVHPD		xmm2, complex_z.Im
-				MOVLPD		xmm2, complex_z.Re		; XMM2: |z.Im|z.Re|
+				MOVAPD		xmm1, xmm4				; XMM1: |z.Im|z.Re|
+				MOVLHPS		xmm1, xmm1				; XMM1: |z.Re|z.Re|
+				MOVAPD		xmm2, xmm4				; XMM2: |z.Im|z.Re|
 
 				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im|z.Re^2|
-				MOVUPD		xmm2, xmm4
+				MOVUPD		xmm2, complex_fill_2_1_g
+				
 				MULPD		xmm1, xmm2				; XMM1: |z.Re * z.Im * 2|z.Re^2|
 				; debug checkpoint 2
 
-				CMP			eax, 1
-				JE			compute_g_checkpoint3_sse_found
-				JMP			compute_g_checkpoint3_sse_notfound
-
-				compute_g_checkpoint3_sse_found:
-					ADDSUBPD	xmm1, xmm0				; XMM1: |(z.Re * z.Im * 2) + (c.Im * z_prev.Im)|(z.Re^2) - (z.Im^2)|
-					JMP			compute_g_checkpoint3_end
+				ADDSUBPD	xmm1, xmm0				; XMM1: |(z.Re * z.Im * 2) + (c.Im * z_prev.Im)|(z.Re^2) - (z.Im^2)|
+				JMP			compute_g_checkpoint3_end
 				
-				compute_g_checkpoint3_sse_notfound:
-					XORPS		xmm2, xmm2
-					XORPS		xmm3, xmm3
-					MOVUPD		tmp1_xmm, xmm0
-				
-					MOVLPD		xmm2, tmp1_xmm.L		; XMM2: | 0 | z.Im^2 |
-					MOVHPD		xmm3, tmp1_xmm.H		; XMM3: | c.Im * z_prev.Im | 0 |
-					
-					SUBPD		xmm1, xmm2
-					ADDPD		xmm1, xmm3
-				
-					JMP			compute_g_checkpoint3_end
-					
 				; debug checkpoint 3
 
 				compute_g_checkpoint3_end:
 				XORPS		xmm0, xmm0				; XMM0: | 0 | 0 |
-				MOVLPD		xmm0, complex_c.Im		; XMM0: | 0 |c.Im|
+				MOVAPD		xmm3, xmm7				; XMM3:	|c.Re|c.Im|
+				MOVLHPS		xmm3, xmm3				; XMM3:	|c.Im|c.Im|
+
+				MOVHLPS		xmm0, xmm3				; XMM0: | 0 |c.Im|
 
 				XORPS		xmm2, xmm2				; XMM2: | 0 | 0 |
-				MOVLPD		xmm2, complex_z_prev.Re	; XMM2: | 0 |z_prev.Re|
+				MOVAPD		xmm3, xmm5				; XMM3: | z_prev.Im | z_prev.Re |
+				MOVLHPS		xmm3, xmm3				; XMM3: | z_prev.Re | z_prev.Re |
+
+				MOVHLPS		xmm2, xmm3				; XMM2: | 0 |z_prev.Re|
 
 				MULPD		xmm0, xmm2				; XMM0: | 0 |c.Im * z_prev.Re|
 				; debug checkpoint #4
 
-				MOVLPD		xmm2, complex_c.Re		; XMM2: | 0 |c.Re|
+				MOVHLPS		xmm2, xmm7				; XMM2: | 0 |c.Re|
 				ADDPD		xmm0, xmm2				; XMM0:	| 0 |(c.Im * z_prev.Re) + c.Re|
 				; debug checkpoint #5
 
 				ADDPD		xmm1, xmm0				; XMM1: |(z.Re * z.Im * 2) + (c.Im * z_prev.Im)|(z.Re^2) - (z.Im^2) + (c.Im * z_prev.Re) + c.Re|
 				; debug checkpoint #6
 
-				MOVUPD		complex_z_next, xmm1	; z_next
+				MOVAPD		xmm6, xmm1	; z_next
 
 				; compute the modulo
-				MOVLPD		xmm0, complex_z.Im		; XMM0: | ---- | z.Im |
-				MOVHPD		xmm0, complex_z.Re		; XMM0:	| z.Re | z.Im |
-				MOVLPD		xmm1, complex_z.Im		; XMM1: | ---- | z.Im |
-				MOVHPD		xmm1, complex_z.Re		; XMM1:	| z.Re | z.Im |
+				MOVUPD		xmm0, xmm4			; XMM0: | z.Re | z.Im |
+				MOVAPD		xmm1, xmm4				; XMM1: | z.Re | z.Im |
 
 				MULPD		xmm0, xmm1				; XMM0: | z.Re ^ 2 | z.Im ^ 2 |
 
-				; done
-				XORPS		xmm1, xmm1
-				MOVHLPS		xmm1, xmm0
-				; eodone
-
-				;MOVUPD		complex_tmp, xmm0
-				;MOVLPD		xmm1, complex_tmp.H		; XMM1: | ---- | z.Re ^ 2 |
+				XORPS		xmm1, xmm1				; XMM1: | ---- | ---- |
+				MOVHLPS		xmm1, xmm0				; XMM1: | ---- | z.Re ^ 2 |
 				ADDPD		xmm0, xmm1				; XMM0: | ---- | z.Im ^ 2 + z.Re ^ 2 |
 				
 				INC		ecx
 
 				; compare xmm and xmm6 and store result i EFLAGS
-				COMISD		xmm0, xmm5				; XMM0 is modulo, XMM5 is "4"
-				
+				MOV			eax, 4
+				MOVD		mm0, eax
+				CVTPI2PD	xmm1, mm0		; XMM1: | ---- | 4 | 
+				MOVLHPS		xmm1, xmm1		; XMM1: | 4 | 4 |
+				COMISD		xmm0, xmm1		; XMM0 is modulo, XMM5 is "4"
 				
 				JAE		compute_g_end					; if modulo >= 4 then end
 				;JGE		compute_g_end				; if modulo >= 4 then end
