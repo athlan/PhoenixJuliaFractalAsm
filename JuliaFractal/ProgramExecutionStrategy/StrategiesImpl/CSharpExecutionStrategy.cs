@@ -34,6 +34,19 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
     {
         public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double RangeXStart, double RangeXStop, double RangeYStart, double RangeYStop, double CRe, double CIm)
         {
+            int iteration = 5;
+            int color = 0;
+
+            color += (int)(255.0 * iteration / 120);
+            color = color << 8;
+
+            color += (int)(255.0 * iteration / 120);
+            color = color << 8;
+
+            color += (int)(255.0 * Math.Log(iteration) / Math.Log(120));
+
+
+
             Complex p = new Complex();
             Complex c = new Complex(CRe, CIm);
 
@@ -43,26 +56,18 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
             double ratioX = (RangeXStop - RangeXStart) / imageWidth;
             double ratioY = (RangeYStop - RangeYStart) / imageHeight;
 
-            //for (i = 0; i < imageHeight; i++)
-            //for (int e = 0; e < 10; ++e)
-            //{
-                for (i = offsetStart; i < offsetStop; i++)
+            for (i = offsetStart; i < offsetStop; i++)
+            {
+                segment = i * imageHeight;
+
+                p.Im = i * ratioY + RangeYStart;
+
+                for (j = 0; j < imageWidth; j++)
                 {
-                    //for (int e = 0; e < 1000000; ++e) { double test = Math.Sin(e); }
-                    //System.Console.WriteLine("tid: " + offsetStart + " it: " + i);
-                    segment = i * imageHeight;
-
-                    p.Im = i * ratioY + RangeYStart;
-
-                    for (j = 0; j < imageWidth; j++)
-                    {
-                        p.Re = j * ratioX + RangeXStart;
-                        imageBytes[segment + j] = levelSet(p, c);
-                        //graph.DrawRectangle(levelSet(p, c), j, i, 1, 1);
-                    }
+                    p.Re = j * ratioX + RangeXStart;
+                    imageBytes[segment + j] = levelSet(p, c);
                 }
-            //}
-            //Thread.Sleep(500);
+            }
         }
 
         //function z[0]=p

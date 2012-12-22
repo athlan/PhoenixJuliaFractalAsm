@@ -31,8 +31,8 @@ namespace PhoenixJuliaFractal
 
         protected int[] imageBytes;
 
-        protected int imageWidth = 600;
-        protected int imageHeight = 600;
+        protected int imageWidth = 512;
+        protected int imageHeight = 512;
 
         public Program()
         {
@@ -47,14 +47,12 @@ namespace PhoenixJuliaFractal
             Application.Run(this.form);
         }
 
-        public void ThreadStartHaha(object o)
+        public void FireAllThreads(object o)
         {
             if (!(o is ProgramExecutionStartegyParams))
                 return;
             
             ProgramExecutionStartegyParams param = o as ProgramExecutionStartegyParams;
-            //Thread.Sleep(param.ThradId * 1000);
-            //return;
             int offsetStart = param.ExecutionOffsetStart;
             int offsetStop  = param.ExecutionOffsetStop;
 
@@ -70,8 +68,6 @@ namespace PhoenixJuliaFractal
 
             param.Strategy.execute(ref imageBytes, offsetStart, offsetStop, imageWidth, imageHeight, RangeXStart, RangeXStop, RangeYStart, RangeYStop, CRe, CIm);
 
-            //this.runExecutionCompleted();
-
         }
 
         public void bw_DoWork(object sender, DoWorkEventArgs e)
@@ -84,7 +80,6 @@ namespace PhoenixJuliaFractal
             Thread[] threadPool = new Thread[coresCount];
             ProgramExecutionStartegyParams[] threadParamsStack = new ProgramExecutionStartegyParams[coresCount];
 
-            // MessageBox.Show("cores selected: "  + threadPool.Length.ToString());
             double RangeXStart = this.form.RangeXStart;
             double RangeXStop = this.form.RangeXStop;
             double RangeYStart = this.form.RangeYStart;
@@ -97,8 +92,6 @@ namespace PhoenixJuliaFractal
             for (int i = 0; i < imageBytes.Length; ++i)
                 imageBytes[i] = 0;
             
-            //ProgramExecutionStartegyParams threadParams;
-
             int ExecutionStepsStop = imageHeight;
             int ExecutionStepsPerProcess = (int)Math.Ceiling((double)ExecutionStepsStop / threadPool.Length);
             int ExecutionStepsTotal = 0;
@@ -107,8 +100,6 @@ namespace PhoenixJuliaFractal
             {
                 threadParamsStack[i] = new ProgramExecutionStartegyParams();
                 threadParamsStack[i].ThradId = i + 1;
-                //threadParamsStack[i].Offset = 1;
-                //threadParamsStack[i].Strategy = strategy;
                 threadParamsStack[i].Strategy = ProgramExecutionStrategyFactory.getStrategy(this.form.ExecutionMode);
 
                 ExecutionStepsTotal += ExecutionStepsPerProcess;
@@ -120,7 +111,6 @@ namespace PhoenixJuliaFractal
                 else
                     threadParamsStack[i].ExecutionOffsetStop = ExecutionStepsTotal;
 
-                //threadParamsStack[i].ImageBytes = imageBytes;
                 threadParamsStack[i].ImageBytes = new int[imageWidth * imageHeight];
                 threadParamsStack[i].ImageWidth = imageWidth;
                 threadParamsStack[i].ImageHeight = imageHeight;
@@ -131,7 +121,7 @@ namespace PhoenixJuliaFractal
                 threadParamsStack[i].ParamCRe = CRe;
                 threadParamsStack[i].ParamCIm = CIm;
 
-                threadPool[i] = new Thread(new ParameterizedThreadStart(ThreadStartHaha));
+                threadPool[i] = new Thread(new ParameterizedThreadStart(FireAllThreads));
             }
 
             for (int i = 0; i < threadPool.Length; ++i)

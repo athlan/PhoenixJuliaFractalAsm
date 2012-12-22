@@ -40,9 +40,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="JuliaFractalAssembly22.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
     <MASM Include="JuliaFractalAssembly.asm">
       <Filter>Source Files</Filter>
     </MASM>

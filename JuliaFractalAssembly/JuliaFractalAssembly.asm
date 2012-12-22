@@ -17,11 +17,28 @@ MOV2XMM MACRO xmmreg, value, mmx_throught
 	POP			eax
 ENDM
 
+;;;
+;
+; Structure StructComplex represents a complex in SSE2 128-bit
+; register, where Re part is in lower 64-bit part and Im is in
+; higher part. The values are double precision floating point.
+;
+;;;
 StructComplex STRUCT
 	Re	QWORD ?
 	Im	QWORD ?
 StructComplex ENDS
 
+;;;
+;
+; Structure StructXMM2 represents a SSE2 register splitted into
+; higher and lower part. This structure helps storing and getting
+; data from SSE2 registers after processing instructions
+; MOVAPD either MOVUPD. The memory allocated with this structure
+; fills that higher part of register puts into H property and
+; lower part into L property.
+;
+;;;
 StructXMM2 STRUCT
 	L	QWORD ?		; lo-part of register when structure is loaded by MOVUPD
 	H	QWORD ?		; hi-part of register
@@ -38,6 +55,12 @@ StructXMM4 ENDS
 
 .code
 
+;;;
+;
+; Procedure detetcs if SSE3 is present
+; and returns 1 in eax if present and 0 overthise
+;
+;;
 DetectSSE3 proc uses ebx ecx edx
 
 	mov		eax, 1 ; function 0x0000001, check for "pni" Prescott New Instructions (SSE3)
@@ -49,14 +72,85 @@ DetectSSE3 proc uses ebx ecx edx
 	ret
 DetectSSE3 endp
 
-ALIGN 16
+;;;
+;
+; Computes the 24-bit colour depends of number of Julia Fractal
+; algorytm iterations.
+;
+;;;
+ProcessJuliaColour proc iterations:dword
+LOCAL log_e_120 : REAL8
+LOCAL iterations_tmp : REAL8
+LOCAL bandwitch : DWORD
+LOCAL bandwitch_saturate : QWORD
+LOCAL result : DWORD
+
+	MOV		eax, 120
+	MOVD	mm0, eax
+	MOVQ	log_e_120, mm0
+	
+	MOV		eax, 255
+	MOVD	mm0, eax
+	MOVQ	bandwitch_saturate, mm0
+
+	MOV		eax, iterations
+	MOVD	mm0, eax
+	MOVQ	iterations_tmp, mm0
+
+	FINIT
+
+	FLDLN2
+	FILD	iterations_tmp
+	FYL2X
+
+	FLDLN2				; load log_e(2)
+	FILD	log_e_120	; load x as a double (convert from integer)
+	FYL2X				; compute log_e(2)*log_2(x) = log_e(x)
+	FDIV
+
+	FILD	bandwitch_saturate
+	FMUL
+	;FSTP	result	; store the result
+	FIST	result	; store the result as integer
+	
+	MOV		eax, 120
+	MOV		bandwitch, eax
+
+	PUSH	edx
+
+	MOV		eax, 255
+	MUL		iterations
+	XOR		edx, edx
+	DIV		bandwitch
+	PUSH	eax			; push - store value of eax
+	SHL		eax, 8
+
+	POP		edx			; pop - get value of old eax
+	ADD		eax, edx
+	SHL		eax, 8
+	
+	MOV		edx, result
+	ADD		eax, edx
+
+	POP		edx
+
+	RET
+
+ProcessJuliaColour endp
+
+;;;
+;
+; 
+;
+;;;
 ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, offsetStop:dword, imageWidth:dword, imageHeight:dword, imageWidthQ:real8, imageHeightQ:real8, rangeXStart:real8, rangeXStop:real8, rangeYStart:real8, rangeYStop:real8, CRe:real8, CIm:real8
 	LOCAL imageRatio	: StructXMM2
 	LOCAL complex_p		: StructComplex
 
-	LOCAL tmp_segment:DWORD;
-	LOCAL loop_j:DWORD;
-	
+	LOCAL tmp_segment	: DWORD
+	LOCAL loop_j		: DWORD
+	LOCAL log_e_120		: DWORD
+
 	; RESEVED REGISTERS:
 	; xmm4 - complex_z
 	; xmm5 - complex_z_prev
@@ -251,6 +345,11 @@ ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, 
 			MOV		edx, imageBytesPtr
 			MOV		eax, tmp_segment
 			ADD		eax, loop_j
+
+			PUSH eax
+			INVOKE ProcessJuliaColour, ecx
+			MOV	ecx, eax
+			POP eax
 
 			MOV		DWORD PTR[edx+eax*4], ecx
 
