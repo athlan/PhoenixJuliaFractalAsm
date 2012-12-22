@@ -65,8 +65,9 @@ namespace PhoenixJuliaFractal
             double RangeYStop    = param.RangeYStop;
             double CRe           = param.ParamCRe;
             double CIm           = param.ParamCIm;
+            bool debugMode       = param.debugMode;
 
-            param.Strategy.execute(ref imageBytes, offsetStart, offsetStop, imageWidth, imageHeight, RangeXStart, RangeXStop, RangeYStart, RangeYStop, CRe, CIm);
+            param.Strategy.execute(ref imageBytes, offsetStart, offsetStop, imageWidth, imageHeight, RangeXStart, RangeXStop, RangeYStart, RangeYStop, CRe, CIm, debugMode);
 
         }
 
@@ -86,6 +87,7 @@ namespace PhoenixJuliaFractal
             double RangeYStop = this.form.RangeYStop;
             double CRe = this.form.ParamCRe;
             double CIm = this.form.ParamCIm;
+            bool debugModeEnabled = this.form.DebugMode;
 
             imageBytes = new int[imageWidth * imageHeight];
 
@@ -120,6 +122,7 @@ namespace PhoenixJuliaFractal
                 threadParamsStack[i].RangeYStop = RangeYStop;
                 threadParamsStack[i].ParamCRe = CRe;
                 threadParamsStack[i].ParamCIm = CIm;
+                threadParamsStack[i].debugMode = debugModeEnabled;
 
                 threadPool[i] = new Thread(new ParameterizedThreadStart(FireAllThreads));
             }

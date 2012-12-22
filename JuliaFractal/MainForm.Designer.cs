@@ -55,8 +55,9 @@ namespace PhoenixJuliaFractal
             this.labelXStop = new System.Windows.Forms.Label();
             this.labelXStart = new System.Windows.Forms.Label();
             this.groupRender = new System.Windows.Forms.GroupBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.selectionPanel = new System.Windows.Forms.Panel();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.debugModeCheckBox = new System.Windows.Forms.CheckBox();
             this.statusStrip1.SuspendLayout();
             this.groupProperties.SuspendLayout();
             this.groupRender.SuspendLayout();
@@ -89,6 +90,7 @@ namespace PhoenixJuliaFractal
             // 
             // groupProperties
             // 
+            this.groupProperties.Controls.Add(this.debugModeCheckBox);
             this.groupProperties.Controls.Add(this.progressBar);
             this.groupProperties.Controls.Add(this.comboCoresExecution);
             this.groupProperties.Controls.Add(this.labelCoresExecution);
@@ -120,7 +122,7 @@ namespace PhoenixJuliaFractal
             // 
             // progressBar
             // 
-            this.progressBar.Location = new System.Drawing.Point(6, 301);
+            this.progressBar.Location = new System.Drawing.Point(6, 323);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(208, 23);
             this.progressBar.TabIndex = 19;
@@ -133,7 +135,7 @@ namespace PhoenixJuliaFractal
             this.comboCoresExecution.Name = "comboCoresExecution";
             this.comboCoresExecution.Size = new System.Drawing.Size(100, 21);
             this.comboCoresExecution.TabIndex = 18;
-            this.comboCoresExecution.SelectedValueChanged += new System.EventHandler(comboCoresExecution_SelectedValueChanged);
+            this.comboCoresExecution.SelectedValueChanged += new System.EventHandler(this.comboCoresExecution_SelectedValueChanged);
             // 
             // labelCoresExecution
             // 
@@ -314,6 +316,14 @@ namespace PhoenixJuliaFractal
             this.groupRender.TabStop = false;
             this.groupRender.Text = "Rendering output";
             // 
+            // selectionPanel
+            // 
+            this.selectionPanel.BackColor = System.Drawing.SystemColors.HighlightText;
+            this.selectionPanel.Location = new System.Drawing.Point(3, 16);
+            this.selectionPanel.Name = "selectionPanel";
+            this.selectionPanel.Size = new System.Drawing.Size(0, 0);
+            this.selectionPanel.TabIndex = 1;
+            // 
             // pictureBox1
             // 
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -326,13 +336,15 @@ namespace PhoenixJuliaFractal
             this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
             this.pictureBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseUp);
             // 
-            // selectionPanel
+            // debugModeCheckBox
             // 
-            this.selectionPanel.BackColor = System.Drawing.SystemColors.HighlightText;
-            this.selectionPanel.Location = new System.Drawing.Point(3, 16);
-            this.selectionPanel.Name = "selectionPanel";
-            this.selectionPanel.Size = new System.Drawing.Size(0, 0);
-            this.selectionPanel.TabIndex = 1;
+            this.debugModeCheckBox.AutoSize = true;
+            this.debugModeCheckBox.Location = new System.Drawing.Point(6, 300);
+            this.debugModeCheckBox.Name = "debugModeCheckBox";
+            this.debugModeCheckBox.Size = new System.Drawing.Size(148, 17);
+            this.debugModeCheckBox.TabIndex = 20;
+            this.debugModeCheckBox.Text = "Enable brute-debug mode";
+            this.debugModeCheckBox.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -398,6 +410,7 @@ namespace PhoenixJuliaFractal
         private System.Windows.Forms.Label labelCoresExecution;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Panel selectionPanel;
+        private System.Windows.Forms.CheckBox debugModeCheckBox;
     }
 }
 

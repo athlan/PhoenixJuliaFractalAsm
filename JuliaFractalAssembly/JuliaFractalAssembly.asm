@@ -143,13 +143,12 @@ ProcessJuliaColour endp
 ; 
 ;
 ;;;
-ProcessJulia proc imageBytesPtr:ptr, imageBytesLength:dword, offsetStart:dword, offsetStop:dword, imageWidth:dword, imageHeight:dword, imageWidthQ:real8, imageHeightQ:real8, rangeXStart:real8, rangeXStop:real8, rangeYStart:real8, rangeYStop:real8, CRe:real8, CIm:real8
+ProcessJulia proc imageBytesPtr:ptr, offsetStart:dword, offsetStop:dword, imageWidth:dword, imageHeight:dword, imageHeightQ:real8, imageWidthQ:real8, rangeXStart:real8, rangeXStop:real8, rangeYStart:real8, rangeYStop:real8, CRe:real8, CIm:real8
 	LOCAL imageRatio	: StructXMM2
 	LOCAL complex_p		: StructComplex
 
 	LOCAL tmp_segment	: DWORD
 	LOCAL loop_j		: DWORD
-	LOCAL log_e_120		: DWORD
 
 	; RESEVED REGISTERS:
 	; xmm4 - complex_z

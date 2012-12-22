@@ -11,9 +11,9 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
     unsafe public class AsemblerExecutionStrategy : IProgramExecutionStrategy
     {
         [DllImport("JuliaFractalAssembly.dll")]
-        public static extern int ProcessJulia(int* imageTab, int imageTabSize, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double imageWidthQ, double imageHeightQ, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm);
+        public static extern int ProcessJulia(int* imageTab, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double imageWidthQ, double imageHeightQ, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm);
         
-        public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm)
+        public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double rangeXStart, double rangeXStop, double rangeYStart, double rangeYStop, double CRe, double CIm, bool debugMode)
         {
             int result = 0;
 
@@ -29,8 +29,12 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
             {
                 try
                 {
-                    result = ProcessJulia(imageBytesPtr, imageBytes.Length, offsetStart, offsetStop, imageWidth, imageHeight, Convert.ToDouble(imageWidth), Convert.ToDouble(imageHeight), rangeXStart, rangeXStop, rangeYStart, rangeYStop, CRe, CIm);
+                    int limit = (debugMode == true) ? 20 : 1;
 
+                    for (int i = 0; i < limit; ++i)
+                    {
+                        result = ProcessJulia(imageBytesPtr, offsetStart, offsetStop, imageWidth, imageHeight, Convert.ToDouble(imageWidth), Convert.ToDouble(imageHeight), rangeXStart, rangeXStop, rangeYStart, rangeYStop, CRe, CIm);
+                    }
                 }
                 catch (Exception e)
                 {

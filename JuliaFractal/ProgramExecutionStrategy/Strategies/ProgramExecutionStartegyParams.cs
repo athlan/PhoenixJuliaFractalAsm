@@ -23,5 +23,6 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy.Strategies
         public double RangeYStop { get; set; }
         public double ParamCRe { get; set; }
         public double ParamCIm { get; set; }
+        public bool debugMode { get; set; }
     }
 }

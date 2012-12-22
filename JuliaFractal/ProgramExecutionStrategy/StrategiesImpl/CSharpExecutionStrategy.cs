@@ -32,40 +32,32 @@ namespace PhoenixJuliaFractal.ProgramExecutionStrategy
 
     public class CSharpExecutionStrategy : IProgramExecutionStrategy
     {
-        public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double RangeXStart, double RangeXStop, double RangeYStart, double RangeYStop, double CRe, double CIm)
+        public void execute(ref int[] imageBytes, int offsetStart, int offsetStop, int imageWidth, int imageHeight, double RangeXStart, double RangeXStop, double RangeYStart, double RangeYStop, double CRe, double CIm, bool debugMode)
         {
-            int iteration = 5;
-            int color = 0;
+            int limit = (debugMode == true) ? 20 : 1;
 
-            color += (int)(255.0 * iteration / 120);
-            color = color << 8;
-
-            color += (int)(255.0 * iteration / 120);
-            color = color << 8;
-
-            color += (int)(255.0 * Math.Log(iteration) / Math.Log(120));
-
-
-
-            Complex p = new Complex();
-            Complex c = new Complex(CRe, CIm);
-
-            int i, j;
-            int segment;
-
-            double ratioX = (RangeXStop - RangeXStart) / imageWidth;
-            double ratioY = (RangeYStop - RangeYStart) / imageHeight;
-
-            for (i = offsetStart; i < offsetStop; i++)
+            for (int limitCounter = 0; limitCounter < limit; ++limitCounter)
             {
-                segment = i * imageHeight;
+                Complex p = new Complex();
+                Complex c = new Complex(CRe, CIm);
 
-                p.Im = i * ratioY + RangeYStart;
+                int i, j;
+                int segment;
 
-                for (j = 0; j < imageWidth; j++)
+                double ratioX = (RangeXStop - RangeXStart) / imageWidth;
+                double ratioY = (RangeYStop - RangeYStart) / imageHeight;
+
+                for (i = offsetStart; i < offsetStop; i++)
                 {
-                    p.Re = j * ratioX + RangeXStart;
-                    imageBytes[segment + j] = levelSet(p, c);
+                    segment = i * imageHeight;
+
+                    p.Im = i * ratioY + RangeYStart;
+
+                    for (j = 0; j < imageWidth; j++)
+                    {
+                        p.Re = j * ratioX + RangeXStart;
+                        imageBytes[segment + j] = levelSet(p, c);
+                    }
                 }
             }
         }

@@ -228,5 +228,13 @@ namespace PhoenixJuliaFractal
                 return Double.Parse(this.textCIm.Text);
             }
         }
+
+        public bool DebugMode
+        {
+            get
+            {
+                return this.debugModeCheckBox.Checked;
+            }
+        }
     }
 }

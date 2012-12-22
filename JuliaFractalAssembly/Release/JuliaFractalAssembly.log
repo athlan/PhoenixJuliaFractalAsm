@@ -1,16 +1,18 @@
-﻿Build started 2012-12-21 18:01:08.
-     1>Project "C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\JuliaFractalAssembly\JuliaFractalAssembly.vcxproj" on node 2 (build target(s)).
-     1>InitializeBuildStatus:
+﻿Build started 2012-12-22 14:34:02.
+     1>Project "C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\JuliaFractalAssembly\JuliaFractalAssembly.vcxproj" on node 2 (rebuild target(s)).
+     1>_PrepareForClean:
+         Deleting file "Release\JuliaFractalAssembly.lastbuildstate".
+       InitializeBuildStatus:
          Creating "Release\JuliaFractalAssembly.unsuccessfulbuild" because "AlwaysCreate" was specified.
        _MASM:
          Assembling [Inputs]...
-       _MASM:
-         Assembling [Inputs]...
-         cmd.exe /C "C:\Users\Athlan\AppData\Local\Temp\cd39fba69f5449fca27c9a68dce3dd0e.cmd"
+         cmd.exe /C "C:\Users\Athlan\AppData\Local\Temp\a1ef0c09408642ff920b743a4a48638c.cmd"
          ml.exe /c /nologo /Zi /Fo"Release\JuliaFractalAssembly.obj" /W3 /errorReport:prompt  /TaJuliaFractalAssembly.asm
        ClCompile:
-         All outputs are up-to-date.
-         All outputs are up-to-date.
+         D:\Programs\VS2010\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D JULIAFRACTALASSEMBLY_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yc"StdAfx.h" /Fp"Release\JuliaFractalAssembly.pch" /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt stdafx.cpp
+         stdafx.cpp
+         D:\Programs\VS2010\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D JULIAFRACTALASSEMBLY_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc100.pdb" /Gd /TP /analyze- /errorReport:prompt dllmain.cpp
+         dllmain.cpp
        Link:
          D:\Programs\VS2010\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\Release\JuliaFractalAssembly.dll" /INCREMENTAL:NO /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\JuliaFractalAssembly.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\Release\JuliaFractalAssembly.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\Release\JuliaFractalAssembly.lib" /MACHINE:X86 /DLL Release\dllmain.obj
          Release\stdafx.obj
@@ -23,8 +25,8 @@
        FinalizeBuildStatus:
          Deleting file "Release\JuliaFractalAssembly.unsuccessfulbuild".
          Touching "Release\JuliaFractalAssembly.lastbuildstate".
-     1>Done Building Project "C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\JuliaFractalAssembly\JuliaFractalAssembly.vcxproj" (build target(s)).
+     1>Done Building Project "C:\Users\Athlan\Documents\Visual Studio 2010\Projects\PhoenixJuliaFractal\JuliaFractalAssembly\JuliaFractalAssembly.vcxproj" (rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.56
+Time Elapsed 00:00:01.46
